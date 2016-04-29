@@ -105,13 +105,28 @@
         height: 92%;
         float: left;
       }
-        .left-column h2:last-of-type, .left-column h3:last-child {
+      .left-column h2:last-of-type, .left-column h3:last-child {
           color: #000;
         }
       .right-column {
         width: 75%;
         float: right;
         padding-top: 1em;
+      }
+      /* run button on rust snippets */
+      code.rust { 
+        position: relative; 
+      }
+      a.test-arrow {
+        display: inline-block;
+        position: absolute;
+
+        background-color: #4e8bca;
+        color: #f5f5f5;
+        padding: 5px 10px 5px 10px;
+        border-radius: 5px;
+        top: 5px;
+        right: 5px;
       }
     </style>
   </head>
@@ -179,19 +194,143 @@ void a_function() {
 }
 ```
 ## Aliasing + Mutation cause memory unsafety
+
 ---
-# Ownership
+class: middle
+## Rust provides guarantees that we cannot Alias + Mutate a given resource at the same time
+
+---
+# Ownership (~~Aliasing~~ + Mutation)
+##### Data can only have one owner a a time 
+
+```rust
+fn main() {
+    // The variable binding 'my_vec' OWNS the vector
+    let mut my_vec  = Vec::new();
+
+    my_vec.push(1);
+   // my_vec goes out of scope and will be freed/released
+}
+```
+
+##### We can move the data's ownership to another variable binding 
+```rust
+fn main() {
+  // 'orig_owner' OWNS the vector
+  let mut orig_owner  = vec![1,2,3];
+
+  // Move ownership from 'orig_owner' to 'new_owner'
+  let mut new_owner = orig_owner;
+
+  // Compiler will complain!!!
+  orig_owner.push(4);
+}
+```
+---
+# Ownership (~~Aliasing~~ + Mutation)
+* Moves are automatic, unlike C++'s std::move
+* Moves are shallow copies (compiler may optimize them out)
+
+```rust
+fn take(mut vec: Vec<i32>) {
+  vec.push(4);
+}
+
+fn main() {
+  let mut v = vec![1,2,3];
+  
+  // 'v' is moved to 'take(mut vec: Vec<i32>)' 
+  take(v);
+
+  // Compiler complains!!
+  v.push(5);
+}
+```
+---
+#Ownership (~~Aliasing~~ + Mutation)
+* For  main() to have ownership of the vector, we would be need to move it back.
+   * Very annoying if we have to continually moving data around, into functions and returned from function
+
+```rust
+fn take(mut vec: Vec<i32>) ->  Vec<i32>{
+  vec.push(4);
+  vec
+}
+
+fn main() {
+  let mut v = vec![1,2,3];
+  
+  // 'v' is moved to 'take(mut vec: Vec<i32>)' 
+  let mut v_2 = take(v);
+
+  v_2.push(5);
+}
+```
+* Luckily, Rust provides a mechanism to lend out data
 
 ---
 # Borrowing
+Instead of moving data from one variable binding to another, we can borrow data by taking references to a variable; ownership doesn't change.
+* There are two types of references(borrows), shared borrow (&T) and mutable borrow (&mut T)
+* When the reference goes out of scope, the borrow is over.
+
+#### General Rules of Borrowing
+* Rule 1: any borrow must last for a scope no greater than that of the owner
+* Rule 2: you may have one or the other of these two kinds of borrows, but not both at the same time
 
 ---
-# Concurrency
+## Borrowing Example
+#### Shared Borrow (Aliasing + ~~Mutation~~)
+* Rule: one or more immutable references (&T) to a resource
+
+```rust
+fn borrow(vec: &Vec<i32>) {}
+
+fn main() {
+  let mut vec = vec![1,2,3,4];
+  borrow(&vec); // Borrow!
+  println!("{:?}", vec);// Works!
+}
+```
+
+##### Mutable Borrow (~~Aliasing~~ + Mutation)
+* Rule: exactly one mutable reference (&mut T).
+
+```rust
+fn mutable_borrow(vec: &mut Vec<i32>) {vec.push(5);}
+
+fn main() {
+  let mut vec = vec![1,2,3,4];
+  mutable_borrow(&mut vec); // Mutable Borrow!
+  println!("{:?}", vec);// Works!
+}
+```
+---
+# Try to break some rules!
+What is we tried to have both a mutable and immutable borrow to the same vector?
+
+```rust
+fn borrow(vec_m: &mut Vec<i32>,vec_im: &Vec<i32>) {}
+
+fn main() {
+  let mut vec = vec![1,2,3,4];
+  borrow(&mut vec, &vec);
+}
+```
+
+We get the following error
+```
+<anon>:6:21: 6:24 error: cannot borrow `vec` 
+as immutable because it is also borrowed as mutable [E0502]
+<anon>:6   borrow(&mut vec, &vec)
+```
 ---
 # Sources
 * http://www.slideshare.net/nikomatsakis/guaranteeing-memory-safety-in-rust-39042975
 * https://people.mozilla.org/~acrichton/rust-talk-2014-12-10/#/5
 * http://www.infoq.com/presentations/rust-thread-safety
+* http://pro.theta.eu.org/
+* https://cis198-2016s.github.io/schedule/
     </textarea>
     <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js"></script>
     <script src="playpen.198.js"></script>

@@ -325,6 +325,129 @@ as immutable because it is also borrowed as mutable [E0502]
 <anon>:6   borrow(&mut vec, &vec)
 ```
 ---
+# Preventing Iterator Invalidation
+
+```rust
+fn main(){
+  let mut vec = vec![1,2,3,4,5];
+  // Not idiomatic
+  for i in 0..vec.len() {
+    let elem: &int = &vec[i];
+    // Compiler complains!
+    vec.push(6)
+  }
+  // This is okay because the borrow has expired
+  vec.push(5);
+}
+```
+---
+# Idiomatic iteration through a vector
+```rust
+fn main(){
+  let mut vec = vec![1,2,3,4,5];
+
+  // THIS IS A MOVE
+  for i in vec {
+    println!("{}", i);
+  }
+  // Compiler complains
+  vec.push(5);
+}
+```
+
+```rust
+fn main(){
+  let mut vec = vec![1,2,3,4,5];
+
+  // This is a borrow
+  for i in &vec {
+    println!("{}", i);
+  }
+  // OK
+  vec.push(5);
+}
+```
+---
+# Preventing data races
+### What is a data race?
+Two unsynchronized threads access the same data where at least on thread writes.
+* Aliasing + Mutation + Unordered = Data Race
+* Rust already solves Aliasing and Mutation!
+
+### No data races = No accidentally-shared state
+* All sharing is explicit
+* Rust only provides ownership and borrowing, there are libraries built on top of it to provide different concurrency paradigms
+
+```C++
+*num = 5;
+// This is always true in Rust!
+return *num == 5;
+
+```
+---
+# Message Passing (Ownership)
+* Shared nothing, isolated everything.  
+* Once a thread passes a message/data, the sender no longer has access to the data.
+
+```rust
+fn main() {
+  let (tx, rx) = channel();
+  // Move all variables specified in the closure
+  // will be moved to child thread
+  spawn(move || {
+    let m = vec![1,2,3];
+    tx.send(m);
+  });
+  let m = rx.recv();
+}
+```
+---
+# Shared read-only access 
+### (Ownership & Borrowing)
+
+```rust
+use std::sync::Arc;
+use std::thread;
+
+fn main() {
+    let numbers: Vec<_> = (0..100u32).collect();
+    let shared_numbers = Arc::new(numbers);
+
+    for _ in 0..10 {
+        // Cloning the Arc<T>, will create another pointer
+        // and increase the referece count
+        let child_numbers = shared_numbers.clone();
+
+        thread::spawn(move || {
+            let local_numbers = &child_numbers[..];
+
+            // Work with the local numbers
+        });
+    }
+}
+```
+
+
+---
+# Locked Mutable access 
+### (Ownership & Borrowing)
+
+```rust
+fn foo(mutex: &Mutex<i32>) {
+  // Mutable reference to data
+  let &mut data = mutex.lock();
+  *data += 1;
+
+  // data is destructed, releasing lock
+}
+```
+---
+#Questions?
+* Next time:
+   * Lifetime of variable bindings, what if the compiler can't figure it out?
+   * More Concurrency in Rust (Scoped Threads)
+   * unsafe rust
+---
 # Sources
 * http://www.slideshare.net/nikomatsakis/guaranteeing-memory-safety-in-rust-39042975
 * https://people.mozilla.org/~acrichton/rust-talk-2014-12-10/#/5

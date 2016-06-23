@@ -262,7 +262,9 @@ fn some_function(vec: &mut Vec<i32>) {}
 * Rule: one or more immutable references (&T) to a resource
 
 ```rust
-fn borrow(vec: &Vec<i32>) {}
+fn borrow(vec: &Vec<i32>) {
+  println!("{:?}", vec);
+}
 
 fn main() {
   let mut vec = vec![1,2,3,4];
@@ -306,10 +308,11 @@ it is also borrowed as immutable [E0502]
 ```
 
 ???
-Let's look at a concrete example of how Rust prevents dangling pointers. 
-If we take a look at the push_all function,it simply take elements from one vector and pushes it 
-to the other vector.  However, if we take a look at the example we attempt to pass a single vector as both parameters
-to the push_all function.If it were to allow this situation, as you keep pushing to the vector a reallocation might occur
+* Let's loop back to the issue of dangling pointer that we previously in the C++ example.
+* If we take a look at the push_all function,it simply take elements from one vector and pushes it 
+to the other vector.  
+* What would happen if we tried to have a single vector be both parameters into the push_all vector? This is an iterator invalidation and possible dangling pointer issue
+* If it were to allow this situation, as you keep pushing to the vector a reallocation might occur
 and you get a dangling pointer
 
 The compiler will complain saying we can't borrow vec as mutable since it is already borrowed as immutable. 
@@ -351,17 +354,21 @@ Going to show two
 # Data Races
 
 ### What is a data race?
-Two unsynchronized threads access the same data where **at least one thread writes**.
+Two unsynchronized threads access that access the same data where **at least one thread writes**.
 
 **Aliasing** + **Mutation** + **Unordered** => Data Race
 
-The Rust compiler makes sure that all data sharing is **explicit**, you cannot share data between threads accidently.
+Rust already solves the Aliasing and Mutation problem through ownership and borrowing.  
+Therefore, at compile-time Rust can guarantee that our code will be **data-race free**.
+
+The Rust compiler makes sure that all data sharing is **explicit**, so that the developer cannot accidently share data between threads.
 
 ???
 - One thing you might notice is that you may notice is that
    * Aliasing - two threads point to a single piece of data
    * Mutation - one thread writes
    * Unordered - non synchronized threads
+- If we take a step back, we realize that Rust already solves the aliasing + mutation issue.
 - We can check for data races **AT COMPILE TIME**
 ---
 ## Message Passing 
@@ -427,8 +434,6 @@ And we have to explicitly surround the critical section (part of the program tha
    * The #1 benefit here is that the compiler enforces correct lock based programming, no way to accidently mutate the data between threads when you didn't mean to.
 
 ```
----
-## Unsafe
 ---
 # Sources
 * http://www.slideshare.net/nikomatsakis/guaranteeing-memory-safety-in-rust-39042975

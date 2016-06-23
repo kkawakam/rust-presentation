@@ -356,12 +356,13 @@ Going to show two
 ### What is a data race?
 Two unsynchronized threads access that access the same data where **at least one thread writes**.
 
-**Aliasing** + **Mutation** + **Unordered** => Data Race
+### Observation
+**Aliasing** + **Mutation** + Unordered => Data Race
 
-Rust already solves the Aliasing and Mutation problem through ownership and borrowing.  
-Therefore, at compile-time Rust can guarantee that our code will be **data-race free**.
-
-The Rust compiler makes sure that all data sharing is **explicit**, so that the developer cannot accidently share data between threads.
+### Solution
+- Rust already solves the Aliasing and Mutation problem through ownership and borrowing.  
+- At compile-time Rust can guarantee that our code will be **data-race free**.
+- The Rust compiler makes sure that all data sharing is **explicit**, so that the developer cannot accidently share data between threads.
 
 ???
 - One thing you might notice is that you may notice is that

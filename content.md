@@ -9,20 +9,20 @@ class: center, middle
 # What is Rust?
  - **Project sponsored by Mozilla**
     - Started in 2006 by Graydon Hoare
-    - Sponsored  by Mozilla in 2009
+    - Sponsored by Mozilla in 2009
     - Went 1.0 in May 2015
  - **'Systems Programming Language that runs blazingly fast, prevents segfaults and guarantees thread safety.'**
-    - Compiled language using LLVM
-    - No garbage collector -> no runtime overhead
+    - Compiled language that uses LLVM
     - On-par performance with C/C++
+    - No garbage collector, no runtime overhead
     - Provides memory safety & elimates data races
-    - Most Loved Programming Language - Stack Overflow Developer Survey 2016
  - **There are several companies using Rust in production**
     - [Dropbox - Magic Pocket](http://www.wired.com/2016/03/epic-story-dropboxs-exodus-amazon-cloud-empire/)
     - [Chef - Habitat](https://github.com/habitat-sh/habitat)
     - Mozilla - Servo
 
 ???
+- LLVM is a library that is used to construct, optimize and produce intermediate and/or binary machine code
 - Systems programming language doesn't really have a specific definition but I think people generally say that it can
 be used in applications to replace C/C++
 ---
@@ -90,7 +90,7 @@ to optimize how little memory they needed to manage 1GB (or 1PB) of data.
 # What is safety? (C++)
 ```c++
 void a_function() {
-  // Vector with one element, with reduced capacity of 1
+  // Vector with one element, with some capcity
   std::vector<string> vec;
   .....
 
@@ -140,21 +140,17 @@ Rust compiler ensures that both aliasing and mutation **cannot** happen at the s
 * Memory safety
 * Data-race freedom
 
-**This solution is all done at compile-time**
+**This solution is done at compile-time**
 
 ???
 I want to reiterate that rust checks for memory safety at **compile-time**, no static analysis tool.
 If there is a memory safety issue with your program, it will be captured at compile-time
 ---
 # Other language features
-* Statically typed, with type inference
-* Nothing is null/nil
-* Can't declare an uninitialized variable
-* Result and Option types
-* Data is immutable by default and you have to explicitly declare data as mutable
 * Pattern matching
 * Traits
 * Metaprogramming 
+* Package Manager
 
 ???
 Before we get into ownership and borrowing, Rust is a modern programming language and provides all these features.
@@ -349,7 +345,7 @@ Rust supports many different paradigms for concurrent application
 
 How does ownership and borrowing help solve issues with multithreaded programs?
 ???
-Going to show two
+- C++ the compiler were not really trying to help me to write correct programs when it comes to concurrency 
 ---
 # Data Races
 
@@ -373,8 +369,8 @@ Two unsynchronized threads access that access the same data where **at least one
 - We can check for data races **AT COMPILE TIME**
 ---
 ## Message Passing 
-* This is equivalent to the ownership semantics of moving ownership from one variable to another.
-* Instead, we are moving ownership of the data from the one thread to another thread.
+* Instead, we are moving ownership of the data from the one thread to another thread. 
+Before we were moving ownership of data from one variable binding to another.
 
 ```rust
 use std::sync::mpsc::channel;
@@ -397,7 +393,7 @@ fn main() {
 ```
 
 ???
-The great thing here is that we get this check at compile time
+* The great thing here is that we get this check at compile time
 ---
 ## Locked Mutable access (shared state)
 **C++**
@@ -429,12 +425,14 @@ fn add(mutex: &Mutex<i32>) {        //<--+ Mutex borrow starts here
 ???
 * If we take a look at the C++ example, we will notice that the mutex is a data struture separate from the data it is protecting (pthread_mutex_t)
 And we have to explicitly surround the critical section (part of the program that requires mutual exclusion of access) with _lock and _unlock
-* This is different from how Rust's mutexes are defined differently, in that the ownership of the data (integer in this case) has been moved into the mutex.
+* This is different from how Rust's mutexes are defined differently, in that the ownership of the data (integer in this case) has been moved into the mutex.  The lock OWNS the data it is protecting.
    * When you call the lock function on the mutex, you get the mutable reference to the data back. 
    * This enforces the fact that the only way to mutate the data, is to lock the mutex as opposed to the C++ example
    * The #1 benefit here is that the compiler enforces correct lock based programming, no way to accidently mutate the data between threads when you didn't mean to.
-
-```
+---
+# Questions?
+???
+Unsafe rust is definetely a thing.
 ---
 # Sources
 * http://www.slideshare.net/nikomatsakis/guaranteeing-memory-safety-in-rust-39042975
